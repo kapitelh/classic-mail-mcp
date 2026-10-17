@@ -21,7 +21,7 @@
   "dependencies": {
     "@google-cloud/firestore": "^9.3.1",
     "fastmcp": "^4.22.4",
-    "imapflow": "^2.4.0",
+    "imapflow": "^2.4.2",
     "jose": "^6.2.12",
     "mailparser": "^3.9.38",
     "nodemailer": "^10.1.1",
