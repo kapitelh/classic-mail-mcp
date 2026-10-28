@@ -22,7 +22,7 @@
     "@google-cloud/firestore": "^9.3.1",
     "fastmcp": "^4.22.4",
     "html-to-text": "10.0.1",
-    "imapflow": "^2.4.0",
+    "imapflow": "^2.9.1",
     "jose": "^6.2.12",
     "mailparser": "^3.9.38",
     "nodemailer": "^10.1.1",
