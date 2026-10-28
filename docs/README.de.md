@@ -49,3 +49,9 @@ Jede Person verwendet ein eigenes Cloud-Projekt bzw. einen eigenen Server, eigen
 TLS ist verpflichtend: IMAP 993 und SMTP 465 oder STARTTLS auf 143/587. Provider mit zwingendem XOAUTH2, lokale Klartext-Bridges und beliebige Sonderports sind derzeit nicht unterstützt. Die Mailinhalte, die du abrufst, werden an deinen verbundenen KI-Client weitergegeben.
 
 Weitere Informationen: [Englische Hauptanleitung](../README.md), [Konfiguration](configuration.md), [Client-Einrichtung](clients.md), [Fehlerhilfe](troubleshooting.md), [Sicherheitsmodell](security.md). MIT-Lizenz.
+
+## Leseverbesserungen ab 2.1.0
+
+Leere Klartextteile werden bei vorhandenem HTML durch eine HTML-zu-Text-Konvertierung ergänzt. Nachrichten über 8 MiB werden über einzelne MIME-Textteile gelesen; Anhänge werden dabei nicht vollständig geladen. Für alle Textteile zusammen gilt weiterhin ein Budget von 8 MiB (`bodyLimited`).
+
+Lange Texte sind in Seiten mit 50.000 Zeichen abrufbar: `nextTextOffset` unverändert als `textOffset` übergeben, bis `null` zurückkommt. Anhänge können in 128-KiB-Blöcken bis 128 MiB dekodiert / 192 MiB kodiert abgerufen werden. Bei gestreamten Anhängen bleibt `size` bis zum letzten Block `null`; `encodedSize` ist keine dekodierte Dateigröße. Senden und Weiterleiten behalten ihr 8-MiB-Limit. Die Textkonvertierung führt keine Links oder Skripte aus und bietet weder OCR noch Entschlüsselung.

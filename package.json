@@ -1,6 +1,6 @@
 {
   "name": "classic-mail-mcp",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -21,6 +21,7 @@
   "dependencies": {
     "@google-cloud/firestore": "^9.3.1",
     "fastmcp": "^4.22.4",
+    "html-to-text": "10.0.1",
     "imapflow": "^2.4.0",
     "jose": "^6.2.12",
     "mailparser": "^3.9.38",
@@ -28,6 +29,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@types/html-to-text": "^9.0.4",
     "@types/mailparser": "^3.9.0",
     "@types/node": "^26.6.5",
     "@types/nodemailer": "^8.0.2",

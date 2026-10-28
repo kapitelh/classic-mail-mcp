@@ -108,7 +108,10 @@ The automated suite uses synthetic IMAP, SMTP and OAuth responses. It does not c
 
 ## Limits you should know
 
-- Raw message: 8 MiB. Downloaded attachment: 4 MiB, in 128 KiB chunks. Read text: 50,000 characters.
+- Messages up to 8 MiB use full MIME parsing. Larger messages read individual text parts without loading their attachments; a shared 8 MiB decoded body budget still applies (`bodyLimited`).
+- Text is returned in 50,000-character pages. Pass `nextTextOffset` as `textOffset` until it is `null`. Empty plain-text alternatives fall back to HTML-to-text conversion.
+- Attachments download in 128 KiB chunks, up to 128 MiB decoded / 192 MiB encoded. Follow `nextOffset`. For large messages, decoded `size` is `null` until the final chunk; `encodedSize` is a separate wire-size value. Large-part retries may re-read the prefix, but only the requested chunk is retained in memory.
+- Sending, draft creation and forwarding still have an 8 MiB message limit. Text extraction is not OCR and does not decrypt S/MIME or PGP.
 - A search page scans at most 10,000 UIDs. Follow `nextBeforeUid` even if a page is empty.
 - Folder restrictions are exact matches. Special folders may need explicit configuration.
 - SMTP acceptance is not recipient delivery. Sent-folder copying can fail separately.

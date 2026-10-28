@@ -22,3 +22,9 @@
 `check_connection` authenticates to both IMAP and SMTP but sends no mail. `npm run verify < .secrets/config.json` is another local, non-sending check after a build. Its output contains account IDs and sanitized status categories.
 
 Include version, deployment mode, operating system and sanitized error category when reporting a problem. Never attach config files, token responses, callback URLs, mailbox content or raw provider logs.
+
+## Message appears empty or exceeds an old read limit
+
+Update to 2.1.0 or later and refresh MCP tools in your client. Empty plain-text alternatives now fall back to HTML conversion. Large messages use MIME-part reads instead of loading all attachments. For long text, follow `nextTextOffset` with `textOffset`; `bodyLimited` explicitly reports a separate safety cap. Attachment-only mail may legitimately have no body text. Encrypted mail and image-only content require separate decryption or OCR tools.
+
+If a download fails partway through, retry the same attachment index and decoded byte offset. Do not concatenate a failed result. See [tool reference](tools.md) for size limits and unknown streamed sizes.

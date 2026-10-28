@@ -17,7 +17,7 @@ const account = accountSchema.parse({
   smtpHost: 'smtp.example.com',
   allowedFolders: ['INBOX'],
 });
-async function fixture() {
+async function fixture(large = false) {
   const dir = mkdtempSync(join(tmpdir(), 'classic-mail-test-tls-'));
   const key = join(dir, 'key.pem'),
     cert = join(dir, 'cert.pem');
@@ -107,7 +107,52 @@ async function fixture() {
             ok();
           } else if (cmd.startsWith('UID FETCH')) {
             if (/BODY\[/.test(cmd)) seen = true;
-            if (cmd.includes('BODY.PEEK')) {
+            if (large) {
+              const text = Buffer.from('Synthetic large body');
+              const binary = Buffer.alloc(150000, 42);
+              const encoded = Buffer.from(
+                binary
+                  .toString('base64')
+                  .match(/.{1,76}/g)!
+                  .join('\r\n'),
+              );
+              const sections: Record<string, Buffer> = {
+                '1': text,
+                '1.mime': Buffer.from('Content-Type: text/plain; charset=utf-8\r\n\r\n'),
+                '2': encoded,
+                '2.mime': Buffer.from(
+                  'Content-Type: application/octet-stream\r\nContent-Disposition: attachment; filename="test.bin"\r\nContent-Transfer-Encoding: base64\r\n\r\n',
+                ),
+              };
+              socket.write('* 1 FETCH (UID 7 FLAGS () RFC822.SIZE 20971520');
+              if (cmd.includes('BODYSTRUCTURE'))
+                socket.write(
+                  ' BODYSTRUCTURE (("TEXT" "PLAIN" ("CHARSET" "UTF-8") NIL NIL "7BIT" ' +
+                    text.length +
+                    ' 1 NIL NIL NIL NIL)("APPLICATION" "OCTET-STREAM" NIL NIL NIL "BASE64" ' +
+                    encoded.length +
+                    ' NIL ("ATTACHMENT" ("FILENAME" "test.bin")) NIL NIL) "MIXED" ("BOUNDARY" "b") NIL NIL NIL)',
+                );
+              for (const m of cmd.matchAll(/BODY\.PEEK\[([^\]]+)\](?:<(\d+)\.(\d+)>)?/g)) {
+                const key = m[1].toLowerCase(),
+                  start = Number(m[2] || 0);
+                const value = (sections[key] || Buffer.alloc(0)).subarray(
+                  start,
+                  m[3] ? start + Number(m[3]) : undefined,
+                );
+                socket.write(
+                  ' BODY[' +
+                    m[1] +
+                    ']' +
+                    (m[2] ? '<' + start + '>' : '') +
+                    ' {' +
+                    value.length +
+                    '}\r\n',
+                );
+                socket.write(value);
+              }
+              socket.write(')\r\n');
+            } else if (cmd.includes('BODY.PEEK')) {
               socket.write('* 1 FETCH (UID 7 FLAGS () BODY[]<0> {' + raw.length + '}\r\n');
               socket.write(raw);
               socket.write(')\r\n');
@@ -200,6 +245,37 @@ test('actual TLS handshake rejects untrusted certificate and wrong server hostna
       }
     }
     assert.ok(!f.commands.some((c) => c.startsWith('LOGIN')));
+  } finally {
+    await f.close();
+  }
+});
+
+test('real TLS MIME part downloads decode base64 exactly without fetching the large full source', async () => {
+  const f = await fixture(true);
+  try {
+    const mail = new MailService([account], () => f.make());
+    const found = await mail.search('synthetic', 'INBOX', {}, 1);
+    const id = found.messages[0].id;
+    const r = await mail.read('synthetic', id);
+    assert.equal(r.text, 'Synthetic large body');
+    assert.equal(r.attachments.length, 1);
+    const a = await mail.attachment('synthetic', id, 0);
+    const b = await mail.attachment('synthetic', id, 0, a.nextOffset!);
+    assert.equal(a.size, null);
+    assert.equal(b.size, 150000);
+    assert.equal(b.nextOffset, null);
+    assert.deepEqual(
+      Buffer.concat([Buffer.from(a.base64, 'base64'), Buffer.from(b.base64, 'base64')]),
+      Buffer.alloc(150000, 42),
+    );
+    assert.equal(f.seen, false);
+    assert.ok(f.commands.some((c) => c.includes('BODY.PEEK[2]')));
+    assert.ok(
+      !f.commands.some(
+        (c) =>
+          c.includes('BODY.PEEK[]') || /^(SELECT|CLOSE|EXPUNGE|APPEND)|^UID (STORE|MOVE)/.test(c),
+      ),
+    );
   } finally {
     await f.close();
   }

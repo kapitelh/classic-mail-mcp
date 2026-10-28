@@ -217,7 +217,7 @@ test('UIDVALIDITY mismatch and server read-write response fail before fetching',
     assert.equal(f.closed, 1);
   }
 });
-test('oversized messages rejected before download; incomplete sources rejected', async () => {
+test('large messages without MIME structure and incomplete sources rejected', async () => {
   let count = 0;
   const f = fixture(undefined, {
     async fetchOne() {
@@ -225,7 +225,7 @@ test('oversized messages rejected before download; incomplete sources rejected',
       return { size: LIMITS.message + 1 };
     },
   });
-  await assert.rejects(f.service.read('test', id), /8 MiB/);
+  await assert.rejects(f.service.read('test', id), /MIME structure/);
   assert.equal(count, 1);
   assert.equal(f.closed, 1);
   const g = fixture(undefined, {
@@ -252,9 +252,8 @@ test('text truncates explicitly; chunks reconstruct exact attachment bytes', asy
   assert.ok(Buffer.byteLength(boundedJson(a)) < LIMITS.response);
   await assert.rejects(f.service.attachment('test', id, 0, payload.length + 1), /offset/);
 });
-test('oversized attachment, invalid index, missing attachment and oversized JSON rejected', async () => {
-  const f = fixture(message(Buffer.alloc(LIMITS.attachment + 1)));
-  await assert.rejects(f.service.attachment('test', id, 0), /4 MiB/);
+test('invalid attachment index, missing attachment and oversized JSON rejected', async () => {
+  const f = fixture();
   await assert.rejects(f.service.attachment('test', id, -1));
   await assert.rejects(f.service.attachment('test', id, 1), /not found/);
   assert.throws(() => boundedJson({ text: 'ä'.repeat(LIMITS.response) }), /size limit/);
