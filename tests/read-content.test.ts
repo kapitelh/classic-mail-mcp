@@ -235,3 +235,19 @@ test('decoded attachment cap is enforced while retaining only the requested chun
     /128 MiB/,
   );
 });
+
+test('named inline text remains body text, consistent with full MIME parsing', async () => {
+  const tree = {
+    type: 'text/plain',
+    part: '1',
+    disposition: 'inline',
+    parameters: { name: 'notes.txt', charset: 'iso-8859-1' },
+    dispositionParameters: { filename: 'notes.txt' },
+  };
+  const f = fixture({ '1': Buffer.from('Inline text ä') }, tree as any);
+  const result = await f.service.read('test', id);
+  assert.equal(result.text, 'Inline text ä');
+  assert.equal(result.attachments.length, 0);
+  await assert.rejects(f.service.attachment('test', id, 0), /not found/);
+  assert.equal(inspectStructure({ ...tree, disposition: 'attachment' }).attachments.length, 1);
+});

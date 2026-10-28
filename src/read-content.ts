@@ -36,8 +36,7 @@ const typeOf = (n: MessageStructureObject) => (n.type ?? '').toLowerCase();
 function isAttachment(n: MessageStructureObject) {
   return (
     n.disposition?.toLowerCase() === 'attachment' ||
-    (!typeOf(n).startsWith('multipart/') && !['text/plain', 'text/html'].includes(typeOf(n))) ||
-    !!(n.dispositionParameters?.filename || n.parameters?.name)
+    (!typeOf(n).startsWith('multipart/') && !['text/plain', 'text/html'].includes(typeOf(n)))
   );
 }
 

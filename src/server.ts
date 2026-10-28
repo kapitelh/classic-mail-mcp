@@ -10,7 +10,7 @@ import { MailService } from './mail.js';
 import { registerTools } from './tools.js';
 import { landingPage } from './ui.js';
 
-const VERSION = '2.1.0';
+const VERSION = '2.1.1';
 async function main() {
   process.umask(0o077);
   const config = readConfig();

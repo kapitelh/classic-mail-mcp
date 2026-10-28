@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1 — 2026-10-28
+
+- Keep named inline text MIME parts in the message body, matching full-source parsing. Only explicitly attached text parts become downloadable attachments. This also avoids applying text charset conversion to downloadable files.
+
 ## 2.1.0 — 2026-10-28
 
 - Recover readable HTML when a message has an empty plain-text alternative.
