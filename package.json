@@ -23,7 +23,7 @@
     "fastmcp": "^4.22.4",
     "html-to-text": "10.0.1",
     "imapflow": "^2.4.0",
-    "jose": "^6.2.12",
+    "jose": "^6.2.13",
     "mailparser": "^3.9.38",
     "nodemailer": "^10.1.1",
     "zod": "^4.6.7"
