@@ -19,11 +19,11 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@google-cloud/firestore": "^9.3.1",
-    "fastmcp": "^4.22.4",
+    "@google-cloud/firestore": "^9.4.0",
+    "fastmcp": "^4.24.1",
     "html-to-text": "10.0.1",
-    "imapflow": "^2.4.0",
-    "jose": "^6.2.12",
+    "imapflow": "^2.10.0",
+    "jose": "^6.2.15",
     "mailparser": "^3.9.38",
     "nodemailer": "^10.1.1",
     "zod": "^4.6.7"

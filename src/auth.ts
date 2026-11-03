@@ -87,9 +87,10 @@ export function authenticate(proxy: OAuthProxy, secrets: Secrets, db: Database, 
           algorithms: ['HS256'],
           issuer: baseUrl,
           audience: baseUrl,
-          requiredClaims: ['exp', 'iat', 'jti', 'scope'],
+          requiredClaims: ['exp', 'iat', 'jti', 'scope', 'token_use'],
         },
       );
+      if (payload.token_use !== 'access') return denied();
       // FastMCP JWTs use arrays; other compatible issuers use space-separated strings.
       // Google may return the canonical userinfo.email URL for the requested email scope.
       stage = 'identity_scopes';
@@ -145,6 +146,44 @@ export function validateOAuthRequest(params: URLSearchParams, baseUrl: string, a
       !/^[A-Za-z0-9_-]{43}$/.test(params.get('code_challenge') ?? ''))
   )
     throw new OAuthProxyError('invalid_request', 'S256 PKCE is required');
+}
+
+/** Reject ambiguous credentials before any authorization code or token is consumed. */
+export function tokenCredentials(params: URLSearchParams, authorization?: string) {
+  for (const name of [
+    'client_id',
+    'client_secret',
+    'grant_type',
+    'code',
+    'code_verifier',
+    'refresh_token',
+    'redirect_uri',
+    'scope',
+  ]) {
+    if (params.getAll(name).length > 1)
+      throw new OAuthProxyError('invalid_request', 'Duplicate OAuth parameter');
+  }
+  let client_id = params.get('client_id') ?? '';
+  let client_secret = params.get('client_secret') ?? undefined;
+  if (authorization !== undefined) {
+    if (params.has('client_id') || params.has('client_secret'))
+      throw new OAuthProxyError('invalid_request', 'Use one client authentication method');
+    const match = /^Basic ([A-Za-z0-9+/]+={0,2})$/i.exec(authorization);
+    if (!match) throw new OAuthProxyError('invalid_client', 'Invalid client authentication');
+    try {
+      const decoded = new TextDecoder('utf-8', { fatal: true }).decode(
+        Buffer.from(match[1], 'base64'),
+      );
+      const separator = decoded.indexOf(':');
+      if (separator < 1) throw Error();
+      client_id = decodeURIComponent(decoded.slice(0, separator).replace(/\+/g, ' '));
+      client_secret = decodeURIComponent(decoded.slice(separator + 1).replace(/\+/g, ' '));
+    } catch {
+      throw new OAuthProxyError('invalid_client', 'Invalid client authentication');
+    }
+  }
+  if (!client_id) throw new OAuthProxyError('invalid_client', 'Client ID is required');
+  return { client_id, client_secret };
 }
 
 /** Use the library's OAuth implementation, preserving cookies and HTTP headers through Cloud Run. */
@@ -323,16 +362,7 @@ export function authRoutes(
   app.post('/oauth/token', async (c) => {
     const params = new URLSearchParams(await c.req.text());
     validateOAuthRequest(params, baseUrl, false);
-    let client_id = params.get('client_id') ?? '',
-      client_secret = params.get('client_secret') ?? undefined;
-    const basic = c.req.header('authorization');
-    if (basic?.startsWith('Basic ')) {
-      const decoded = Buffer.from(basic.slice(6), 'base64').toString(),
-        separator = decoded.indexOf(':');
-      if (separator < 0) return c.json({ error: 'invalid_client' }, 401);
-      client_id = decodeURIComponent(decoded.slice(0, separator));
-      client_secret = decodeURIComponent(decoded.slice(separator + 1));
-    }
+    const { client_id, client_secret } = tokenCredentials(params, c.req.header('authorization'));
     const grant = params.get('grant_type');
     if (grant === 'authorization_code') {
       const code = params.get('code') ?? '',
