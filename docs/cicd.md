@@ -25,6 +25,10 @@ Grant that deployment identity Artifact Registry Writer only on the image reposi
 
 Cloud Run must already be configured for OAuth and persistent Firestore. The smoke check intentionally fails on a locked or bearer-mode service. Tagged revision URLs must be reachable by the GitHub runner under the service's existing ingress policy. No configuration or IAM policy is relaxed by the release script.
 
+For an older deployment with implicit OAuth/Firestore defaults, validate the existing Secret Manager payload against `secretSchema` without printing its values, then explicitly set `AUTH_MODE=oauth` and `STORAGE=firestore` on a no-traffic revision before the first automated release. Set `ACCESS_MODE` to preserve the previously authorized mailbox capabilities. Keep the existing secret version, runtime identity, database and base URL. This migration is performed once by the operator, not by every release.
+
+The runtime image uses Node 24 on Alpine 3.24, upgrades OS packages during the build, and removes npm and Yarn from the final image. Both stages use the same libc family. Docker smoke tests verify SQLite-backed stdio and authenticated HTTP operation; the release image must also pass the vulnerability gate before Google authentication.
+
 ## Verification and recovery
 
 After activation, merge a reviewed PR. Inspect the `CI` run, `deploy` job and Cloud Run revision. Verification checks `/status` and rejection of anonymous MCP initialization; it does not prove provider login, authenticated OAuth or email delivery. Complete an authenticated client login and read-only mailbox check after rollout. The OAuth dependency update requires users with older tokens to sign in again.
