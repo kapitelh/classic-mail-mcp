@@ -23,7 +23,7 @@ gcloud iam workload-identity-pools providers create-oidc github \
   --project="$project" --location=global --workload-identity-pool="$pool" \
   --issuer-uri=https://token.actions.githubusercontent.com \
   --attribute-mapping='google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.repository_owner_id=assertion.repository_owner_id' \
-  --attribute-condition="assertion.repository_id == '1423706964' && assertion.repository_owner_id == '106238865' && assertion.ref == 'refs/heads/main' && assertion.sub == 'repo:kapitelh/classic-mail-mcp:environment:production'"
+  --attribute-condition="assertion.repository_id == '1423706964' && assertion.repository_owner_id == '106238865' && assertion.ref == 'refs/heads/main' && assertion.sub == 'repo:kapitelh@106238865/classic-mail-mcp@1423706964:environment:production'"
 
 gcloud iam service-accounts add-iam-policy-binding "$email" --project="$project" \
   --role=roles/iam.workloadIdentityUser \
