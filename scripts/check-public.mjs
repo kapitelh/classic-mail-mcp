@@ -15,7 +15,7 @@ function scan(dir) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     if (
       skip.has(e.name) ||
-      e.name.startsWith('.env') ||
+      (e.name.startsWith('.env') && e.name !== '.env.example') ||
       e.name.endsWith('.sqlite') ||
       e.name === '.DS_Store'
     )
