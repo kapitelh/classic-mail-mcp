@@ -47,6 +47,14 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: docker build -t classic-mail-mcp:local .
       - run: node scripts/docker-smoke.mjs
+      - name: Scan candidate image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: classic-mail-mcp:local
+          format: table
+          exit-code: '1'
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
