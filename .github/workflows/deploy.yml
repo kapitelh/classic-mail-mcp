@@ -66,8 +66,8 @@ jobs:
           gcloud auth configure-docker "$registry" --quiet
           docker tag classic-mail-mcp:local "$image"
           docker push "$image"
-          digest="$(docker inspect --format='{{index .RepoDigests 0}}' "$image")"
-          [[ "$digest" == "$registry/"*@sha256:* ]]
-          echo "RELEASE_IMAGE=$digest" >> "$GITHUB_ENV"
+          digest="$(gcloud artifacts docker images describe "$image" --project="$PROJECT_ID" --format='value(image_summary.digest)')"
+          [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          echo "RELEASE_IMAGE=${image%:*}@$digest" >> "$GITHUB_ENV"
       - name: Deploy candidate, verify, and promote
         run: bash scripts/release-cloud-run.sh
