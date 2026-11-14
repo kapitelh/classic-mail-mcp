@@ -19,7 +19,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@google-cloud/firestore": "^9.4.0",
+    "@google-cloud/firestore": "^9.4.1",
     "fastmcp": "^4.24.1",
     "html-to-text": "10.0.1",
     "imapflow": "^2.10.0",
